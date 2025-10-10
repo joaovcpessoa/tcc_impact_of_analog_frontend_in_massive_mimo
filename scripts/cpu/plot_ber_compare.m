@@ -14,7 +14,7 @@ env_file = fullfile(current_dir, '..', '..', '.env');
 env_vars = load_env(env_file);
 
 % simulation_dir = env_vars.GPU_SIMULATION_SAVE_PATH;
-simulation_dir = env_vars.SIMULATION_PATH_16QAM;
+simulation_dir = env_vars.SIMULATION_PATH_64QAM;
 plot_dir = env_vars.GPU_PLOT_BER_PATH;
 functions_dir = env_vars.CPU_FUNCTIONS_PATH;
 
@@ -45,8 +45,8 @@ colors = [0.0000 0.0000 0.0000;
 % ####################################################################### %
 
 x = 'dl';
-y = 'zf';
-z = '16qam';
+y = 'mmse';
+z = '64qam';
 
 filename = sprintf('%s_ber_%s_ss_256_64.mat', x, y);
 load(filename);
@@ -107,6 +107,7 @@ set(gca, 'FontName', fontname, 'FontSize', fontsize);
 ylim([1e-3 1])
 
 graph_name = sprintf('%s_ber_compare_%s_%s', x, y, z);
+
 
 if savefig == 1
     saveas(gcf, fullfile(plot_dir, [graph_name '.eps']), 'epsc2');
