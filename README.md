@@ -1,343 +1,171 @@
-# Análise do Front-End analógico de sistemas Massive MIMO
+# Análise de Impacto do Front-end Analógico em Sistemas Massive MIMO
 
-## Introdução
+**Autor:** João Vítor Correia Pessoa  
+**Orientador:** Prof. D.Sc. Rafael da Silva Chaves  
+**Instituição:** CEFET/RJ — Curso de Engenharia de Telecomunicações  
+**Tipo:** Projeto Final de Graduação (TCC)  
+**Ano:** 2025
 
-O foco deste trabalho é avaliar o impacto dos modelos de não linearidade baseados em amplificadores operacionais em sistemas de comunicação Massive MIMO.
-O sistema é modelado através do <b>MATLAB</b> e o desempenho é avaliado em termos da BER média por usuário como uma função da SNR do downlink e uplink medido em terminais usando simulação de Monte Carlo e assumindo conhecimento completo de CSI pela estação base.
+## Descrição
 
-### Scripts de análise:
+Este repositório contém o simulador MATLAB desenvolvido para o Trabalho de Conclusão de Curso. O objetivo é avaliar o impacto das não-linearidades do front-end analógico, especificamente dos amplificadores de potência, no desempenho de BER em sistemas Massive MIMO no downlink.
 
-* `amplitude_analisys.m` - Análise da amplitude e fase dos modelos não lineares baseados nos amplificadores operacionais.
-* `dl_ber.m` -  Análise da BER vs. SNR em Downlink utilizando modulação 16-QAM com as modelagens não lineares baseadas nos amplificadores operacionais.
-* `ul_ber.m` - Análise da BER vs. SNR em Uplink utilizando modulação 16-QAM com as modelagens não lineares baseadas nos amplificadores operacionais.
+Três modelos de amplificador são analisados em comparação com o amplificador ideal (Capítulo 4):
 
-### Scripts para gerar as imagens:
+| Acrônimo | Modelo | Seção |
+|----------|--------|-------|
+| IDEAL | Amplificador ideal (baseline) | - |
+| CLIP | Amplificador de Corte Ideal | 4.2 |
+| SS | Amplificador de Estado Sólido (SSA) | 4.3 |
+| TWT | Amplificador Tubo de Onda Progressiva | 4.4 |
 
-* `plot_amplitude_phase.m` - Exibi os gráficos para as análises de amplitude e fase dos amplificadores operacionais.
-* `plot_ber_clip_ss.m` - Exibi os gráficos para as análises de BER das modelagens não lineares baseadas nos amplificadores operacionais (Tubo de onda tunelada, Corte ideal e Estado sólido).
-* `plot_constellation.m` - Exibi os gráficos das constelações.
+## Parâmetros de Simulação (Tabela 5.2)
 
-### Funções
+| Parâmetro | Valor |
+|-----------|-------|
+| Geometria do arranjo | ULA |
+| Constelação | 16-QAM |
+| Número de blocos | 1000 |
+| Monte-Carlo (posições dos UEs) | 10 |
+| Monte-Carlo (desvanecimento em pequena escala) | 10 |
+| Número de antenas M | {64, 128, 256} |
+| Número de terminais K | {M/4, M/2, M} |
+| SNR no downlink | −10 a 30 dB |
+| Modelo de canal | Desvanecimento Rician (κ = 10 dB), ULA |
+| Pré-codificadores | MF, ZF, MMSE |
+| Link analisado | Downlink |
 
-* `precode_signal.m` - Aplica pré-codificação no sinal.
-* `decode_signal.m` - Aplica decodificação no sinal.
-* `amplify_signal.m` - Amplifica o sinal baseada nos modelos de não linearidade.
-* `normalize_precoded_signal.m` - Normalizar a potência do sinal.
-* `rician_channel_generator.m` - Gera um canal com desvanecimento de Rician.
-* `user_position_generator.m` - Gera um posicionamento para os usuários dentro de uma célula.
-* `load_env.m` - Ajusta as variáveis de ambiente e caminhos importantes dos scripts
+## Estrutura do Repositório
+
+```
+./src
+├── matlab
+│   ├── functions
+│   │   ├── amplify_signal_twt.m
+│   │   ├── amplify_signal.m
+│   │   ├── decode_signal.m
+│   │   ├── precode_signal.m
+│   │   ├── normalize_precoded_signal.m
+│   │   ├── normalize_decoded_signal.m
+│   │   ├── rician_channel_generator.m
+│   │   └── user_position_generator.m
+│   ├── amplitude_analysis.m
+│   ├── dl_ber.m
+│   ├── load_env.m
+│   ├── plot_amplitude_phase.m
+│   ├── plot_ber.m
+│   ├── plot_constellation.m
+│   └── ul_ber.m
+└── python
+    ├── massive_mimo_sim/
+    │   ├── __init__.py
+    │   ├── qam.py
+    │   ├── amplifiers.py
+    │   ├── channel.py
+    │   ├── precoders.py
+    │   ├── simulation.py
+    │   └── plotting.py
+    └── run_simulation.py
+```
+
+## Como Reproduzir os Resultados
+
+### MATLAB
+
+#### Arquivo `.env`
+
+Crie um arquivo `.env` dois níveis acima do diretório dos scripts com os seguintes campos:
+
+```
+CPU_SIMULATION_SAVE_PATH=
+CPU_FUNCTIONS_PATH=
+CPU_PLOT_BER_PATH=
+```
+
+#### Simulação de BER no downlink
+
+Configure as variáveis no início de `ber_downlink.m` antes de executar:
+
+```matlab
+precoder_type = 'ZF';   % 'MF' | 'ZF' | 'MMSE'
+% K deve estar definido no workspace (ou descomentar "K = ..." dentro do script)
+K = 64;                 % M/4 para M=256
+```
+
+Execute para cada combinação de `(M, K, precoder_type)`:
+
+```matlab
+run ber_downlink.m
+```
+
+Cada execução salva um arquivo `.mat` com nome `dl_ber_<precoder>_ss_<M>_<K>.mat`.
+
+Cenários:
+
+| M | K | Precodificadores | Referência |
+|---|---|-----------------|-----------|
+| 64 | 16, 32, 64 | MF, ZF, MMSE | Figs. 5.1 (CLIP), 5.4 (SS), 5.7 (TWT) |
+| 128 | 32, 64, 128 | MF, ZF, MMSE | Figs. 5.2, 5.5, 5.8 |
+| 256 | 64, 128, 256 | MF, ZF, MMSE | Figs. 5.3, 5.6, 5.9 |
+
+#### Curvas de amplitude dos amplificadores
+
+Gera os dados das transferências AM-AM (Figuras 4.2 e 4.3 do TCC).
+
+```matlab
+run amplitude_analysis.m
+run plot_amplitude_phase.m
+```
+
+#### Visualização dos resultados
+
+```matlab
+run plot_ber.m
+run plot_constellation.m
+```
 
 ---
 
-## Detalhamento do Código
+### Python
 
-### dl_ber.m
+```bash
+pip install numpy matplotlib scipy
 
-O código simula um sistema de comunicação Massive MIMO (Multiple-Input Multiple-Output) em Downlink. O objetivo é calcular a Taxa de Erro de Bit (BER) considerando diferentes tipos de amplificadores e parâmetros do sistema. Como eu detesto comentar código, vou deixar abaixo uma explicação mais detalhada possível sobre como ele é estruturado.
+# Figuras de amplitude apenas (< 1 segundo)
+python run_simulation.py --amp-only
 
-<b>Limpeza e Configuração Inicial</b>
+# Monte Carlo reduzido (n_mc1=n_mc2=3, ~minutos por config)
+python run_simulation.py --quick
 
-```matlab
-clear;     % Remove todas as variáveis do workspace
-close all; % Fecha todas as figuras abertas
-clc;       % Limpa a janela de comando
-```
-Comandos básicos do sistema e extremamente importante se você, assim como eu, fica facilmente frustrado com o fato de ter que ficar limpando o terminal após executar o código.
-
-<b>Configuração de Caminhos</b>
-
-```matlab
-% Obtém o diretório do script atual
-current_dir = fileparts(mfilename('fullpath'));
-
-% Define o caminho para um arquivo .env no diretório superior
-env_file = fullfile(current_dir, '..', '.env');
-
-% Carrega variáveis de ambiente (como caminhos) usando a função load_env
-env_vars = load_env(env_file);
-
-% Extrai os caminhos para salvar simulações e acessar funções
-simulation_dir = env_vars.SIMULATION_SAVE_PATH;
-functions_dir = env_vars.FUNCTIONS_PATH;
-
-% Adiciona esses diretórios ao caminho de busca do MATLAB
-addpath(simulation_dir);
-addpath(functions_dir);
+# Simulação completa igual ao MATLAB (n_mc1=n_mc2=10, várias horas)
+python run_simulation.py
 ```
 
-Eu descobri o quão necessário é isso lidando com erros de diretório. Simplesmente criei uma `.env` que utilizo em projetos de Python e JS e construi uma função para lidar com isso.
+Os resultados são salvos em `simulation_results/` por padrão.  
+Use `--outdir <caminho>` para alterar o diretório.  
+Use `--force` para forçar re-execução mesmo com cache `.npz` existente.
 
-<details>
-  <summary><b>Sobre a função load_env.m</b></summary>
+#### Figuras geradas
 
-A função load_env é o coração dessa solução. Ela lê o arquivo .env e transforma seu conteúdo em um struct que o MATLAB pode usar.
+| Arquivo | Figura do TCC | Descrição |
+|---------|--------------|-----------|
+| `fig4_2_clip_am_am.png` | Fig 4.2 | Curva AM-AM do CLIP |
+| `fig4_3_ss_am_am.png` | Fig 4.3 | Curvas AM-AM do SS (p=1,2,3; A0=1,2) |
+| `fig4_4_twt_am_am_pm.png` | Fig 4.4 | Curvas AM-AM e AM-PM do TWT |
+| `fig5.1_ber_clip_M64.png` | Fig 5.1 | BER vs SNR – CLIP, M=64 |
+| `fig5.2_ber_clip_M128.png` | Fig 5.2 | BER vs SNR – CLIP, M=128 |
+| `fig5.3_ber_clip_M256.png` | Fig 5.3 | BER vs SNR – CLIP, M=256 |
+| `fig5.4_ber_ss_M64.png` | Fig 5.4 | BER vs SNR – SS, M=64 |
+| `fig5.5_ber_ss_M128.png` | Fig 5.5 | BER vs SNR – SS, M=128 |
+| `fig5.6_ber_ss_M256.png` | Fig 5.6 | BER vs SNR – SS, M=256 |
+| `fig5.7_ber_twt_M64.png` | Fig 5.7 | BER vs SNR – TWT, M=64 |
+| `fig5.8_ber_twt_M128.png` | Fig 5.8 | BER vs SNR – TWT, M=128 |
+| `fig5.9_ber_twt_M256.png` | Fig 5.9 | BER vs SNR – TWT, M=256 |
 
-```matlab
-% Define a função load_env que lê variáveis de ambiente de um arquivo .env
-function env_vars = load_env(env_file)
-    % Inicializa um struct vazio para armazenar as variáveis de ambiente
-    env_vars = struct();
-    
-    % Verifica se o arquivo .env existe (retorna 2 se for um arquivo regular)
-    if exist(env_file, 'file') == 2
-        % Abre o arquivo .env em modo leitura
-        fid = fopen(env_file, 'r');
-        % Lê o arquivo linha por linha até o final
-        while ~feof(fid)
-            % Lê uma linha, remove espaços em branco no início e fim
-            line = strtrim(fgetl(fid));
-            % Pula linhas vazias ou comentários (que começam com #)
-            if isempty(line) || startsWith(line, '#')
-                continue;
-            end
-            % Usa expressão regular para dividir a linha em chave e valor (formato CHAVE=VALOR)
-            tokens = regexp(line, '^(.*?)=(.*)$', 'tokens');
-            % Se a linha foi dividida corretamente, processa chave e valor
-            if ~isempty(tokens)
-                % Extrai e remove espaços da chave
-                key = strtrim(tokens{1}{1});
-                % Extrai e remove espaços do valor
-                value = strtrim(tokens{1}{2});
-                % Adiciona o par chave-valor ao struct
-                env_vars.(key) = value;
-            end
-        end
-        % Fecha o arquivo após a leitura
-        fclose(fid);
-    else
-        % Lança erro se o arquivo .env não for encontrado
-        error('Arquivo .env não encontrado.');
-    end
-end
-```
-</details>
+#### Reprodutibilidade
 
-<br>
-
-<b>Parâmetros Principais</b>
-Precoding e Amplificadores
-
-```matlab
-% Define o precodificador como 'MF' (Matched Filter)
-precoder_type = 'MF';
-
-% Lista os tipos de amplificadores ('IDEAL' e 'TWT')
-amplifiers_type = {'IDEAL', 'TWT'};
-
-% Calcula o número de amplificadores (2)
-N_AMP = length(amplifiers_type);
-```
-
-<b>Parâmetros do Amplificador TWT</b>
-
-```matlab
-% Define três conjuntos de parâmetros para o amplificador TWT (chi_A, kappa_A, chi_phi, kappa_phi), que modelam suas características não lineares
-params = {
-    struct('chi_A', 1.6397, 'kappa_A', 0.0618, 'chi_phi', 0.2038, 'kappa_phi', 0.1332),
-    struct('chi_A', 1.9638, 'kappa_A', 0.9945, 'chi_phi', 2.5293, 'kappa_phi', 2.8168),
-    struct('chi_A', 2.1587, 'kappa_A', 1.1517, 'chi_phi', 4.0033, 'kappa_phi', 9.1040)
-};
-
-% Calcula o número de conjuntos (3)
-N_params = length(params);
-```
-
-<b>Configurações de Simulação</b>
-
-```matlab
-% Número de blocos de símbolos por simulação (1000)
-N_BLK = 1000;
-
-% Número de realizações de Monte Carlo para posições dos usuários (10)
-N_MC1 = 10;
-
-% Número de realizações de Monte Carlo para o canal NLOS (10)
-N_MC2 = 10;
-
-% Antenas e Usuários
-
-% Número de antenas na estação base (64)
-M = 64;
-
-% Número de usuários (16)
-K = 16;
-
-% Modulação
-
-% Bits por símbolo (4)
-B = 4;
-
-% Ordem da modulação QAM (16-QAM)
-M_QAM = 2^B;
-
-% Vetor de SNR em dB, de -10 a 30 com passo 1
-SNR = -10:1:30;
-
-% Número de valores de SNR (41)
-N_SNR = length(SNR);
-
-% Converte SNR para escala linear
-snr = 10.^(SNR/10);
-
-% Raio máximo para posições dos usuários (1000 metros)
-radial = 1000;
-% Velocidade da luz
-c = 3e8;
-% Frequência portadora (1 GHz)
-f = 1e9;
-% Fator de Rice em dB (10)
-K_f_dB = 10;
-% Fator de Rice em escala linear
-K_f = 10^(K_f_dB/10);
-
-```
-
-<b>Configurações do canal</b>
-
-```matlab
-% Comprimento de onda
-lambda = c / f;
-% Distância entre antenas
-d = lambda / 2;
-% Matriz de correlação espacial
-R = eye(M);
-```
-
-<b>Alocação de Memória</b>
-
-```matlab
-% Matrizes para armazenar as coordenadas x e y dos usuários
-x_user = zeros(K, N_MC1);
-y_user = zeros(K, N_MC1);
-
-% Matriz 6D para armazenar a BER por usuário, SNR, amplificador, conjunto de parâmetros e realizações de Monte Carlo
-BER = zeros(K, N_SNR, N_AMP, N_params, N_MC1, N_MC2);
-```
-
-<b>Simulação de Monte Carlo</b>
-
-```matlab
-% Loop Externo: Posições dos Usuários
-for mc_idx1 = 1:N_MC1
-    mc_idx1
-    [x_user(:,mc_idx1), y_user(:,mc_idx1)] = user_position_generator(K,radial);
-    theta_user = atan2(y_user(:,mc_idx1), x_user(:,mc_idx1));
-    A_LOS = exp(1i * 2 * pi * (0:M-1)' * 0.5 .* repmat(sin(theta_user'), M, 1));
-    H_LOS = sqrt(K_f / (1 + K_f)) * A_LOS;
-
-% Exibe o índice da realização para monitoramento
-% Gera posições aleatórias para K usuários dentro do raio radial
-% Calcula os ângulos dos usuários em relação à estação base
-% Matriz de direção LOS (M×K) baseada nos ângulos
-% Canal LOS escalado pelo fator de Rice
-```
-
-```matlab
-% Loop Interno: Canal NLOS
-for mc_idx2 = 1:N_MC2
-  mc_idx2
-  H_NLOS = (randn(M, K) + 1i * randn(M, K)) / sqrt(2);
-  H = H_LOS + sqrt(1 / (1 + K_f)) * sqrtm(R) * H_NLOS;
-
-% Exibe o índice da realização NLOS
-% Gera a componente NLOS como ruído gaussiano complexo normalizado
-% Combina LOS e NLOS para formar o canal total
-```
-
-<b>Geração de Símbolos</b>
-
-```matlab
-bit_array = randi([0, 1], B * N_BLK, K);
-s = qammod(bit_array, M_QAM, 'InputType', 'bit');
-Ps = vecnorm(s).^2 / N_BLK;
-
-% Gera bits aleatórios
-% Modula os bits em símbolos 16-QAM
-% Calcula a potência média dos símbolos por usuário
-```
-
-<b>Precoding</b>
-
-```matlab
-precoder = precode_signal(precoder_type, H, N_SNR, snr);
-x_normalized = normalize_precoded_signal(precoder, precoder_type, M, s, N_SNR);
-
-% Calcula o precodificador 'MF' baseado no canal H
-% Normaliza o sinal precodificado para cada SNR
-```
-
-<b>Ruído</b>
-
-```matlab
-% Loops de SNR, Amplificador e Parâmetros
-for snr_idx = 1:N_SNR
-  for amp_idx = 1:N_AMP
-    for param_idx = 1:N_params
-      chi_A = params{param_idx}.chi_A;
-      kappa_A = params{param_idx}.kappa_A;
-      chi_phi = params{param_idx}.chi_phi;
-      kappa_phi = params{param_idx}.kappa_phi;
-      current_amp_type = amplifiers_type{amp_idx};
-```
-
-Itera sobre SNR, tipos de amplificador e parâmetros do TWT, extraindo os valores correspondentes.
-
-<b>Transmissão e Recepção</b>
-
-```matlab
-if strcmp(precoder_type, 'MMSE')
-  y = H.' * amplify_signal(sqrt(snr(snr_idx)) * x_normalized(:, :, snr_idx), current_amp_type, chi_A, kappa_A, chi_phi, kappa_phi) + v_normalized;    
-else
-  y = H.' * amplify_signal(sqrt(snr(snr_idx)) * x_normalized, current_amp_type, chi_A, kappa_A, chi_phi, kappa_phi) + v_normalized;
-end
-
-% Escala o sinal precodificado pela SNR.
-% Aplica amplificação ('IDEAL' ou 'TWT') usando amplify_signal.
-% Multiplica pelo canal conjugado transposto (H.') e adiciona ruído.
-```
-
-<b>Demodulação e BER</b>
-
-```matlab
-bit_received = zeros(B * N_BLK, K);              
-for users_idx = 1:K
-  s_received = y(users_idx, :).';
-  Ps_received = norm(s_received)^2 / N_BLK;
-  bit_received(:, users_idx) = qamdemod(sqrt(Ps(users_idx) / Ps_received) * s_received, M_QAM, 'OutputType', 'bit');
-  [~, bit_error] = biterr(bit_received(:, users_idx), bit_array(:, users_idx));
-  BER(users_idx, snr_idx, amp_idx, param_idx, mc_idx1, mc_idx2) = bit_error;
-end
-
-% Para cada usuário
-%   Extrai o sinal recebido
-%   Calcula sua potência
-%   Demodula os símbolos, ajustando pela potência original
-%   Calcula a BER comparando bits transmitidos e recebidos
-```
-
-<b>Salvamento dos Resultados</b>
-
-```matlab
-file_name = sprintf('dl_ber_%s_%s_%d_%d.mat', lower(precoder_type), lower(amplifiers_type{2}), M, K);
-save(fullfile(simulation_dir, file_name), 'M', 'K', 'SNR', 'BER', 'N_AMP', 'N_A0', 'A0', 'precoder_type', 'amplifiers_type', 'N_params');
-
-% Cria um nome como dl_ber_mf_twt_64_16.mat.
-% Salva variáveis relevantes no diretório simulation_dir.
-```
-### Observações importantes
-
-Quando o número de bits é ímpar, a constelação  não é quadrada, o que torna o mapeamento e demapeamento mais custosos, pois o mapeamento qammod gera uma constelação que não tem tanta simetria, levando a mais cálculos internos e a demodulação qamdemod também precisa trabalhar com regiões de decisão mais complexas, o que pode aumentar o tempo de execução.
-
-Modulações com número de bits par geralmente resultam em constelações simétricas, o que facilita otimizações vetoriais e uso de LUTs (Look-Up Tables) nos algoritmos internos do MATLAB. Operações vetoriais são altamente otimizadas em MATLAB, mas quando a estrutura dos dados não segue padrões quadrados, a vetorização pode ser menos eficiente. Isso gera mais loops internos ou chamadas de função mais custosas.
-
-### Referências
-
-[✍🏻 Artigo](https://)
-
-## Apoiadores do Projeto
-
-[@rafaelschaves](https://github.com/rafaelschaves)
-
-## Autor
-
-[@joaovcpessoa](https://github.com/joaovcpessoa)
+- Todos os sorteios aleatórios usam `numpy.random.default_rng(seed=42)`.
+- Os resultados de BER de cada par `(amplificador, M)` são cacheados em `.npz`.  
+  Os gráficos podem ser regenerados a partir do cache sem re-simular.
+- A simulação replica fielmente o `dl_ber.m` do MATLAB, incluindo o divisor `M`  
+  (e não `N_BLK`) na normalização por antena de `normalize_precoded_signal.m`.

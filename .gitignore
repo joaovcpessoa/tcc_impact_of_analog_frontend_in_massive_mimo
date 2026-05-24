@@ -1,8 +1,1 @@
-*.fig
-*.png
-*.epsc2
-*.eps
-*.mat
-*./data/
-*.env
-*.asv
+**/outputs/
