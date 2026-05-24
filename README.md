@@ -1,10 +1,10 @@
 # Análise de Impacto do Front-end Analógico em Sistemas Massive MIMO
 
-**Autor:** João Vítor Correia Pessoa  
-**Orientador:** Prof. D.Sc. Rafael da Silva Chaves  
-**Instituição:** CEFET/RJ — Curso de Engenharia de Telecomunicações  
-**Tipo:** Projeto Final de Graduação (TCC)  
-**Ano:** 2025
+- **Autor:** João Vítor Correia Pessoa  
+- **Orientador:** Prof. D.Sc. Rafael da Silva Chaves  
+- **Instituição:** Centro Federal de Educação Tecnológica Celso Suckow da Fonseca (CEFET/RJ)
+- **Tipo:** Projeto Final de Graduação (TCC)  
+- **Ano:** 2025
 
 ## Descrição
 
